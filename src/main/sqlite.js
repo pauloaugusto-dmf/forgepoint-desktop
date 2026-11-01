@@ -4,7 +4,10 @@ const { open } = require('sqlite');
 const path = require('path');
 const { app } = require('electron');
 
-const userDataPath = app.getPath('userData');
+const userDataPath =
+  app && typeof app.getPath === 'function'
+    ? app.getPath('userData')
+    : path.join(process.env.HOME || '.', '.config', 'forgepoint-desktop');
 const dbPath = path.join(userDataPath, 'forgepoint.sqlite');
 
 console.log('[Forgepoint DB] Database path:', dbPath);
@@ -41,10 +44,18 @@ async function initDatabase() {
       title TEXT NOT NULL,
       description TEXT,
       image_url TEXT,
+      gdd_data TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
     );
   `);
+
+  // Migração segura: garante que a coluna gdd_data existe em bancos existentes
+  try {
+    await dbInstance.exec(`ALTER TABLE game_ideas ADD COLUMN gdd_data TEXT;`);
+  } catch (e) {
+    // Coluna já existe
+  }
 
   // 3. Tabela Pivô (N:N) com estado local no jogo
   await dbInstance.exec(`
@@ -97,6 +108,27 @@ async function initDatabase() {
     UPDATE mechanics SET gif_url = 'src/assets/mechanics/tiro_projeteis.gif'
     WHERE name = 'Sistema de Tiro / Projéteis' AND (gif_url IS NULL OR gif_url = '');
   `);
+
+  // Garante seed de GDD para o projeto de exemplo Neon Protocol se estiver sem GDD
+  const neonRow = await dbInstance.get(`SELECT id, gdd_data FROM game_ideas WHERE title LIKE '%Neon Protocol%' LIMIT 1;`);
+  if (neonRow && (!neonRow.gdd_data || neonRow.gdd_data === '{}')) {
+    const sampleGdd = {
+      genre: 'Metroidvania / Ação Cyberpunk 2D',
+      target_platforms: 'PC (Steam), Nintendo Switch',
+      target_audience: 'Fãs de Katana Zero, Dead Cells e Ghostrunner',
+      usp: 'Movimentação acrobática com alternância de nós de rede e parry via firewall.',
+      references: 'Katana Zero, Dead Cells, Celeste, Ghostrunner',
+      core_loop: 'Infiltrar setor -> Parkour vertical e esquivas -> Combate tático em tempo real -> Hackear mainframe -> Obter upgrades de chip.',
+      win_loss_conditions: 'Vitória: Sobrecargar o núcleo da IA central. Derrota: Barra de integridade zerar ou firewall isolar o setor.',
+      progression_systems: 'Módulos passivos de overclock, expansão de slots de memória e upgrades na cadência de plasma.',
+      art_style: 'Pixel Art 16-bit com iluminação dinâmica neon volumétrica e alto contraste.',
+      audio_style: 'Trilha sonora darksynth/synthwave agressiva com SFX digitais e mecânicos imersivos.',
+      narrative_setting: 'Megacidade subterrânea gerida por uma IA tirânica que desativou os últimos humanos orgânicos.',
+      engine: 'Godot 4.3',
+      mvp_scope: '1 setor com 4 salas interligadas, 2 tipos de sentinelas, 1 miniboss e as 5 mecânicas essenciais conectadas.'
+    };
+    await dbInstance.run(`UPDATE game_ideas SET gdd_data = ? WHERE id = ?`, [JSON.stringify(sampleGdd), neonRow.id]);
+  }
 
   return dbInstance;
 }
@@ -204,7 +236,7 @@ async function deleteMechanic(id) {
 async function getGameIdeas() {
   const db = await initDatabase();
   const ideas = await db.all(`
-    SELECT id, title, description, image_url, created_at, updated_at
+    SELECT id, title, description, image_url, gdd_data, created_at, updated_at
     FROM game_ideas
     ORDER BY created_at DESC
   `);
@@ -240,10 +272,21 @@ async function getGameIdeas() {
     });
   }
 
-  return ideas.map((idea) => ({
-    ...idea,
-    mechanics: mechsByIdea[idea.id] || [],
-  }));
+  return ideas.map((idea) => {
+    let parsedGdd = {};
+    if (idea.gdd_data) {
+      try {
+        parsedGdd = JSON.parse(idea.gdd_data);
+      } catch (e) {
+        parsedGdd = {};
+      }
+    }
+    return {
+      ...idea,
+      gdd: parsedGdd,
+      mechanics: mechsByIdea[idea.id] || [],
+    };
+  });
 }
 
 async function getGameIdeaById(id) {
@@ -267,8 +310,18 @@ async function getGameIdeaById(id) {
     [id]
   );
 
+  let parsedGdd = {};
+  if (idea.gdd_data) {
+    try {
+      parsedGdd = JSON.parse(idea.gdd_data);
+    } catch (e) {
+      parsedGdd = {};
+    }
+  }
+
   return {
     ...idea,
+    gdd: parsedGdd,
     mechanics: mechanics.map((m) => ({
       ...m,
       is_implemented: Boolean(m.is_implemented),
@@ -281,12 +334,17 @@ async function addGameIdea(idea, mechanicsLinks = []) {
   const db = await initDatabase();
   await db.exec('BEGIN TRANSACTION;');
   try {
+    const gddString = idea.gdd_data
+      ? (typeof idea.gdd_data === 'string' ? idea.gdd_data : JSON.stringify(idea.gdd_data))
+      : (idea.gdd ? JSON.stringify(idea.gdd) : null);
+
     const res = await db.run(
-      `INSERT INTO game_ideas (title, description, image_url) VALUES (?, ?, ?)`,
+      `INSERT INTO game_ideas (title, description, image_url, gdd_data) VALUES (?, ?, ?, ?)`,
       [
         idea.title.trim(),
         idea.description ? idea.description.trim() : null,
         idea.image_url ? idea.image_url.trim() : null,
+        gddString,
       ]
     );
     const ideaId = res.lastID;
@@ -318,14 +376,19 @@ async function updateGameIdea(id, idea, mechanicsLinks = []) {
   const db = await initDatabase();
   await db.exec('BEGIN TRANSACTION;');
   try {
+    const gddString = idea.gdd_data
+      ? (typeof idea.gdd_data === 'string' ? idea.gdd_data : JSON.stringify(idea.gdd_data))
+      : (idea.gdd ? JSON.stringify(idea.gdd) : null);
+
     await db.run(
       `UPDATE game_ideas
-       SET title = ?, description = ?, image_url = ?, updated_at = datetime('now', 'localtime')
+       SET title = ?, description = ?, image_url = ?, gdd_data = ?, updated_at = datetime('now', 'localtime')
        WHERE id = ?`,
       [
         idea.title.trim(),
         idea.description ? idea.description.trim() : null,
         idea.image_url ? idea.image_url.trim() : null,
+        gddString,
         id,
       ]
     );
@@ -422,7 +485,7 @@ async function getAllData() {
 
   return {
     app: 'forgepoint-desktop',
-    version: app.getVersion ? app.getVersion() : '1.0.1',
+    version: app && typeof app.getVersion === 'function' ? app.getVersion() : '1.1.0',
     exported_at: new Date().toISOString(),
     data: {
       mechanics,
@@ -467,10 +530,11 @@ async function importData(backup) {
     // Restaura ideias
     if (Array.isArray(backup.data.game_ideas)) {
       for (const g of backup.data.game_ideas) {
+        const gddVal = g.gdd_data || (g.gdd ? JSON.stringify(g.gdd) : null);
         await db.run(
-          `INSERT INTO game_ideas (id, title, description, image_url, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [g.id, g.title, g.description || null, g.image_url || null, g.created_at, g.updated_at]
+          `INSERT INTO game_ideas (id, title, description, image_url, gdd_data, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [g.id, g.title, g.description || null, g.image_url || null, gddVal, g.created_at, g.updated_at]
         );
       }
     }
