@@ -211,10 +211,20 @@ export default function App() {
     try {
       const created = await window.api.addMechanic(payload);
       await loadData();
-      toast.success(`Mecânica "${created.name}" criada com sucesso!`);
       return created;
     } catch (err) {
       toast.error('Erro ao criar mecânica rápida: ' + err.message);
+      throw err;
+    }
+  };
+
+  const handleQuickUpdateMechanic = async (id, payload) => {
+    try {
+      const updated = await window.api.updateMechanic(id, payload);
+      await loadData();
+      return updated;
+    } catch (err) {
+      toast.error('Erro ao atualizar mecânica: ' + err.message);
       throw err;
     }
   };
@@ -762,6 +772,7 @@ export default function App() {
         onClose={() => setIsIdeaModalOpen(false)}
         onSave={handleSaveIdea}
         onQuickCreateMechanic={handleQuickCreateMechanic}
+        onQuickUpdateMechanic={handleQuickUpdateMechanic}
         initialIdea={selectedIdea}
         mechanics={mechanics}
       />

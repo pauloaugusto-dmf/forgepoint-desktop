@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // Media (GIFs / Images)
   selectMedia: () => ipcRenderer.invoke('media:select'),
+  selectMultipleMedia: () => ipcRenderer.invoke('media:selectMultiple'),
 
   // Backup & Restore
   exportData: () => ipcRenderer.invoke('data:export'),

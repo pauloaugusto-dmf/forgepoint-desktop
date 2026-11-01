@@ -485,7 +485,7 @@ async function getAllData() {
 
   return {
     app: 'forgepoint-desktop',
-    version: app && typeof app.getVersion === 'function' ? app.getVersion() : '1.1.0',
+    version: app && typeof app.getVersion === 'function' ? app.getVersion() : '1.2.0',
     exported_at: new Date().toISOString(),
     data: {
       mechanics,

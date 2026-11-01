@@ -57,6 +57,36 @@ function setupIpcHandlers() {
     return destPath;
   });
 
+  ipcMain.handle('media:selectMultiple', async () => {
+    const { filePaths } = await dialog.showOpenDialog({
+      title: 'Selecionar Múltiplos GIFs / Imagens para Mecânicas',
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: 'Mídias Suportadas', extensions: ['gif', 'png', 'jpg', 'jpeg', 'webp'] },
+      ],
+    });
+
+    if (!filePaths || filePaths.length === 0) return [];
+
+    const mediaDir = path.join(app.getPath('userData'), 'media');
+    if (!fs.existsSync(mediaDir)) {
+      fs.mkdirSync(mediaDir, { recursive: true });
+    }
+
+    return filePaths.map((sourcePath) => {
+      const ext = path.extname(sourcePath).toLowerCase();
+      const baseName = path.basename(sourcePath, ext);
+      const destName = `${Date.now()}_${baseName}_${Math.random().toString(36).substring(2, 6)}${ext}`;
+      const destPath = path.join(mediaDir, destName);
+      fs.copyFileSync(sourcePath, destPath);
+      return {
+        fileName: baseName,
+        originalName: path.basename(sourcePath),
+        filePath: destPath,
+      };
+    });
+  });
+
   // Backup & Restore
   ipcMain.handle('data:export', async () => {
     const data = await db.getAllData();

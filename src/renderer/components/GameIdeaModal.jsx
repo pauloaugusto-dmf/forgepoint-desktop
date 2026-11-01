@@ -16,6 +16,8 @@ import {
   Gamepad2,
   Palette,
   FileText,
+  Image as ImageIcon,
+  FolderUp,
 } from 'lucide-react';
 import { resolveMedia } from '../utils';
 
@@ -35,11 +37,59 @@ const DEFAULT_GDD = {
   mvp_scope: '',
 };
 
+// Mapeamento inteligente de palavras-chave para os GIFs de mecânicas embutidos
+const BUILTIN_GIF_MATCHERS = [
+  { keywords: ['fsm', 'turnos', 'ciclo'], file: 'src/assets/mechanics/fsm_turnos.gif' },
+  { keywords: ['ranks', 'posicoes', 'posições', '1d'], file: 'src/assets/mechanics/ranks_posicoes.gif' },
+  { keywords: ['alvos restritos', 'alcance'], file: 'src/assets/mechanics/alvos_restritos.gif' },
+  { keywords: ['camera', 'câmera', 'impacto', 'punch'], file: 'src/assets/mechanics/camera_impacto.gif' },
+  { keywords: ['multi-monstro', 'aggregate', 'deck dinamico', 'deck dinâmico'], file: 'src/assets/mechanics/deck_multimonstro.gif' },
+  { keywords: ['purga', 'queda', 'knockout'], file: 'src/assets/mechanics/purga_cartas.gif' },
+  { keywords: ['mana', 'comandante', 'mago externo'], file: 'src/assets/mechanics/mana_comandante.gif' },
+  { keywords: ['intencao', 'intenção', 'intent', 'telegrafo', 'telégrafo'], file: 'src/assets/mechanics/intencao_inimiga.gif' },
+  { keywords: ['reacoes', 'reações', 'elementais', 'matriz'], file: 'src/assets/mechanics/reacoes_elementais.gif' },
+  { keywords: ['transmutacao', 'transmutação'], file: 'src/assets/mechanics/transmutacao_cartas.gif' },
+  { keywords: ['caldeirao', 'caldeirão', 'sintese', 'síntese', 'crafting'], file: 'src/assets/mechanics/caldeirao_sintese.gif' },
+  { keywords: ['incubadora', 'incubation', 'ovos'], file: 'src/assets/mechanics/incubadora_monstros.gif' },
+  { keywords: ['ferimento', 'enfermaria', 'wound', 'recovery'], file: 'src/assets/mechanics/ferimento_enfermaria.gif' },
+  { keywords: ['canil', 'roster', 'elenco'], file: 'src/assets/mechanics/canil_roster.gif' },
+  { keywords: ['reliquias', 'relíquias', 'talisman', 'talismã'], file: 'src/assets/mechanics/reliquias_mago.gif' },
+  { keywords: ['mapa', 'incursao', 'incursão', 'node-based', 'nós'], file: 'src/assets/mechanics/mapa_incursao.gif' },
+  { keywords: ['imperio', 'império', 'base building', 'meta-hub'], file: 'src/assets/mechanics/construcao_imperio.gif' },
+  { keywords: ['inventario', 'inventário', 'reagentes', 'essencias', 'essências'], file: 'src/assets/mechanics/inventario_reagentes.gif' },
+  { keywords: ['pulo', 'gravidade'], file: 'src/assets/mechanics/pulo_gravidade.gif' },
+  { keywords: ['state machine'], file: 'src/assets/mechanics/state_machine.gif' },
+  { keywords: ['dash', 'esquiva'], file: 'src/assets/mechanics/dash_esquiva.gif' },
+  { keywords: ['wall jump', 'slide'], file: 'src/assets/mechanics/wall_jump.gif' },
+  { keywords: ['tiro', 'projeteis', 'projéteis'], file: 'src/assets/mechanics/tiro_projeteis.gif' },
+];
+
+function inferGifForMechanic(mechName, explicitGifUrl) {
+  if (explicitGifUrl && typeof explicitGifUrl === 'string' && explicitGifUrl.trim() !== '') {
+    const trimmed = explicitGifUrl.trim();
+    // Se passou apenas o nome do arquivo (ex: "ranks_posicoes.gif"), aponta para src/assets/mechanics/
+    if (!trimmed.includes('/') && !trimmed.includes('\\') && trimmed.endsWith('.gif')) {
+      return `src/assets/mechanics/${trimmed}`;
+    }
+    return trimmed;
+  }
+
+  if (!mechName) return null;
+  const lower = mechName.toLowerCase();
+  for (const matcher of BUILTIN_GIF_MATCHERS) {
+    if (matcher.keywords.some((kw) => lower.includes(kw))) {
+      return matcher.file;
+    }
+  }
+  return null;
+}
+
 export default function GameIdeaModal({
   isOpen,
   onClose,
   onSave,
   onQuickCreateMechanic,
+  onQuickUpdateMechanic,
   initialIdea = null,
   mechanics = [],
 }) {
@@ -54,6 +104,7 @@ export default function GameIdeaModal({
 
   const [mechanicSearch, setMechanicSearch] = useState('');
   const [quickMechName, setQuickMechName] = useState('');
+  const [quickMechGif, setQuickMechGif] = useState('');
   const [quickMechImplemented, setQuickMechImplemented] = useState(false);
   const [creatingQuickMech, setCreatingQuickMech] = useState(false);
 
@@ -97,6 +148,7 @@ export default function GameIdeaModal({
     setActiveTab('concept');
     setMechanicSearch('');
     setQuickMechName('');
+    setQuickMechGif('');
     setQuickMechImplemented(false);
     setError('');
     setImportSuccess('');
@@ -150,19 +202,98 @@ export default function GameIdeaModal({
     }
   };
 
+  const handleSelectQuickMechGif = async () => {
+    try {
+      const filePath = await window.api.selectMedia();
+      if (filePath) {
+        setQuickMechGif(filePath);
+      }
+    } catch (err) {
+      setError('Falha ao selecionar GIF: ' + err.message);
+    }
+  };
+
+  const handleAssignGifToExistingMechanic = async (mech) => {
+    try {
+      const filePath = await window.api.selectMedia();
+      if (filePath && onQuickUpdateMechanic) {
+        await onQuickUpdateMechanic(mech.id, {
+          name: mech.name,
+          description: mech.description || null,
+          gif_url: filePath,
+          is_implemented: Boolean(mech.is_implemented),
+        });
+        setImportSuccess(`GIF associado com sucesso à mecânica "${mech.name}"!`);
+      }
+    } catch (err) {
+      setError('Falha ao associar GIF à mecânica: ' + err.message);
+    }
+  };
+
+  const handleBatchAssociateGifs = async () => {
+    try {
+      if (!window.api.selectMultipleMedia || !onQuickUpdateMechanic) return;
+      const files = await window.api.selectMultipleMedia();
+      if (!files || files.length === 0) return;
+
+      let matchedCount = 0;
+      for (const fileObj of files) {
+        const cleanFile = fileObj.fileName.toLowerCase().replace(/[_-]/g, ' ');
+        const tokens = cleanFile.split(/\s+/).filter((t) => t.length > 2);
+
+        // Procura a mecânica cujo nome mais combina com o nome do arquivo GIF
+        let bestMech = null;
+        let bestScore = 0;
+
+        for (const m of mechanics) {
+          const mLower = m.name
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+          let score = 0;
+          for (const tk of tokens) {
+            if (mLower.includes(tk)) score += 2;
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            bestMech = m;
+          }
+        }
+
+        if (bestMech && bestScore > 0) {
+          await onQuickUpdateMechanic(bestMech.id, {
+            name: bestMech.name,
+            description: bestMech.description || null,
+            gif_url: fileObj.filePath,
+            is_implemented: Boolean(bestMech.is_implemented),
+          });
+          matchedCount++;
+        }
+      }
+
+      setImportSuccess(
+        `${matchedCount} de ${files.length} GIF(s) foram associados automaticamente às suas respectivas mecânicas!`
+      );
+    } catch (err) {
+      setError('Falha ao associar GIFs em lote: ' + err.message);
+    }
+  };
+
   const handleQuickAddMechanic = async () => {
     if (!quickMechName.trim() || !onQuickCreateMechanic) return;
     setCreatingQuickMech(true);
     try {
+      const resolvedGif = inferGifForMechanic(quickMechName.trim(), quickMechGif);
       const created = await onQuickCreateMechanic({
         name: quickMechName.trim(),
         description: null,
-        gif_url: null,
+        gif_url: resolvedGif,
         is_implemented: quickMechImplemented,
       });
       if (created && created.id) {
         toggleMechanic(created.id);
         setQuickMechName('');
+        setQuickMechGif('');
         setQuickMechImplemented(false);
       }
     } catch (err) {
@@ -172,7 +303,7 @@ export default function GameIdeaModal({
     }
   };
 
-  // ==================== IMPORTAÇÃO INTELIGENTE DE JSON ====================
+  // ==================== IMPORTAÇÃO INTELIGENTE DE JSON COM GIFS ====================
 
   const handleImportJsonFile = async (e) => {
     const file = e.target.files?.[0];
@@ -236,31 +367,60 @@ export default function GameIdeaModal({
           gddData.mvp_scope || root.mvp_scope || root.escopo_mvp || root.escopo || root.mvp || '',
       };
 
-      // Mapeamento e vinculação de mecânicas do JSON
+      // Mapeamento, criação e associação de GIFs das mecânicas do JSON
       const rawMechanics =
         json.mechanics || root.mechanics || json.mecanicas || root.mecanicas || [];
       const updatedSelectedMechs = { ...formData.selectedMechanics };
-      let linkedCount = 0;
+      let reusedCount = 0;
+      let createdCount = 0;
+
+      const normalizeStr = (s) =>
+        (s || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim();
 
       if (Array.isArray(rawMechanics)) {
         for (const item of rawMechanics) {
           const mechName = typeof item === 'string' ? item.trim() : item.name?.trim();
           if (!mechName) continue;
 
-          // Busca se já existe no catálogo
-          let matched = mechanics.find(
-            (m) => m.name.toLowerCase() === mechName.toLowerCase()
-          );
+          const itemGifRaw =
+            typeof item === 'object' ? item.gif_url || item.gif || item.image_url || null : null;
+          const resolvedGif = inferGifForMechanic(mechName, itemGifRaw);
+          const itemDesc =
+            typeof item === 'object' ? item.description || item.notes || null : null;
 
-          // Se não existir e puder criar automaticamente
-          if (!matched && onQuickCreateMechanic) {
+          // 1. Verifica primeiro se a mecânica JÁ EXISTE no catálogo (Index)
+          const normTarget = normalizeStr(mechName);
+          let matched = mechanics.find((m) => normalizeStr(m.name) === normTarget);
+
+          if (matched) {
+            // Já existe! Apenas associa ao jogo (e preenche GIF/descrição se a existente estiver vazia)
+            reusedCount++;
+            if (onQuickUpdateMechanic && ((!matched.gif_url && resolvedGif) || (!matched.description && itemDesc))) {
+              try {
+                matched = await onQuickUpdateMechanic(matched.id, {
+                  name: matched.name,
+                  description: matched.description || itemDesc || null,
+                  gif_url: matched.gif_url || resolvedGif || null,
+                  is_implemented: Boolean(matched.is_implemented),
+                });
+              } catch (err) {
+                console.warn('Falha ao complementar mecânica existente:', mechName, err);
+              }
+            }
+          } else if (onQuickCreateMechanic) {
+            // 2. Não existe no catálogo: cria a nova mecânica com seu GIF!
             try {
               matched = await onQuickCreateMechanic({
                 name: mechName,
-                description: item.description || null,
-                gif_url: null,
-                is_implemented: Boolean(item.is_implemented),
+                description: itemDesc,
+                gif_url: resolvedGif,
+                is_implemented: typeof item === 'object' ? Boolean(item.is_implemented) : false,
               });
+              createdCount++;
             } catch (err) {
               console.warn('Falha ao auto-criar mecânica importada:', mechName, err);
             }
@@ -271,7 +431,6 @@ export default function GameIdeaModal({
               is_integrated: typeof item === 'object' ? Boolean(item.is_integrated) : false,
               notes: typeof item === 'object' && item.notes ? item.notes.trim() : '',
             };
-            linkedCount++;
           }
         }
       }
@@ -291,7 +450,7 @@ export default function GameIdeaModal({
       }));
 
       setImportSuccess(
-        `GDD importado com sucesso! Informações carregadas e ${linkedCount} mecânica(s) vinculada(s).`
+        `GDD importado! ${reusedCount} mecânica(s) existente(s) associada(s) e ${createdCount} nova(s) criada(s) com GIF.`
       );
     } catch (err) {
       setError('Erro ao importar JSON: ' + err.message);
@@ -308,35 +467,36 @@ export default function GameIdeaModal({
       pitch: 'Breve resumo de 1 ou 2 parágrafos com o conceito geral e premissa do jogo.',
       image_url: '',
       gdd: {
-        genre: 'Metroidvania / Ação 2D',
+        genre: 'Deckbuilder Tático / Roguelite',
         target_platforms: 'PC (Steam), Nintendo Switch',
-        target_audience: 'Fãs de Hollow Knight e Dead Cells',
-        usp: 'Diferencial único: mecânica inovadora que ninguém mais tem.',
-        references: 'Hollow Knight, Celeste, Katana Zero',
-        core_loop: 'Explorar salas -> Coletar recursos -> Enfrentar inimigos -> Melhorar habilidades',
-        win_loss_conditions: 'Vitória: derrotar o chefe final. Derrota: perder toda a vida.',
-        progression_systems: 'Árvore de habilidades, upgrades de equipamentos e itens passivos.',
-        art_style: 'Pixel Art 16-bit com iluminação dinâmica.',
-        audio_style: 'Trilha sonora orquestral/synthwave com SFX imersivos.',
+        target_audience: 'Fãs de Darkest Dungeon e Slay the Spire',
+        usp: 'Diferencial único do jogo.',
+        references: 'Darkest Dungeon, Slay the Spire, Stacklands',
+        core_loop: 'Preparar na base -> Incursão em mapa de nós -> Combate por turnos -> Evolução',
+        win_loss_conditions: 'Vitória: derrotar o chefe final. Derrota: perder os 3 monstros.',
+        progression_systems: 'Construção da base, transmutação de cartas e relíquias.',
+        art_style: 'Pixel Art detalhada com iluminação dinâmica.',
+        audio_style: 'Trilha sonora mística com SFX táteis.',
         narrative_setting: 'Sinopse e mitologia do universo do jogo.',
-        engine: 'Godot 4.3 / Unity',
-        mvp_scope: '1 fase jogável, 3 inimigos, 1 chefe e movimentação base concluída.',
+        engine: 'Godot 4.3',
+        mvp_scope: '1 bioma jogável, 3 monstros, 4 reações elementais e 1 chefe.',
       },
       mechanics: [
         {
-          name: 'Pulo & Gravidade',
+          name: 'State Machine de Turnos (FSM Combate)',
+          description: 'Ciclo de estados da batalha: Compra, Mana, Ação, Reações e Turno Inimigo.',
+          gif_url: 'src/assets/mechanics/fsm_turnos.gif',
+          is_implemented: true,
           is_integrated: true,
-          notes: 'Pulo com sustentação e salto duplo desbloqueável',
+          notes: 'Orquestrador principal do combate.',
         },
         {
-          name: 'Dash / Esquiva',
+          name: 'Sistema de Ranks & Posições 1D (Darkest Dungeon)',
+          description: 'Posicionamento linear com 3 slots aliados e 4 inimigos.',
+          gif_url: 'src/assets/mechanics/ranks_posicoes.gif',
+          is_implemented: false,
           is_integrated: false,
-          notes: 'Frames de invulnerabilidade ao passar por projéteis',
-        },
-        {
-          name: 'State Machine (FSM)',
-          is_integrated: true,
-          notes: 'Máquina de estados para gerenciar movimentação e combate',
+          notes: 'Define alcance e habilidades válidas.',
         },
       ],
     };
@@ -395,7 +555,6 @@ export default function GameIdeaModal({
   const selectedCount = Object.keys(formData.selectedMechanics).length;
   const previewImage = resolveMedia(formData.image_url);
 
-  // Contadores de campos preenchidos por aba para feedback visual
   const conceptFilled = [
     formData.title,
     formData.description,
@@ -434,13 +593,12 @@ export default function GameIdeaModal({
                 {initialIdea ? 'Editar Ideia & GDD' : 'Novo Jogo & GDD Completo'}
               </h2>
               <p className="text-xs text-txt-muted">
-                Estruture o Game Design Document e vincule o stack de mecânicas
+                Estruture o Game Design Document, vincule mecânicas e associe GIFs animados
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Input escondido para selecionar arquivo JSON */}
             <input
               type="file"
               ref={fileInputRef}
@@ -452,7 +610,7 @@ export default function GameIdeaModal({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/40 text-xs font-bold transition-all shadow-sm cursor-pointer"
-              title="Importar um arquivo JSON com todas as informações do GDD"
+              title="Importar um arquivo JSON com todas as informações do GDD e GIFs das mecânicas"
             >
               <FileJson className="w-4 h-4 text-violet-400" />
               <span>Importar GDD (.json)</span>
@@ -461,8 +619,8 @@ export default function GameIdeaModal({
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-dark-700 text-xs font-medium transition-colors"
-              title="Baixar modelo JSON para preencher ou alimentar ChatGPT/Claude/Gemini"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-dark-700 text-xs font-medium transition-colors cursor-pointer"
+              title="Baixar modelo JSON com suporte a gif_url nas mecânicas"
             >
               <Download className="w-3.5 h-3.5 text-slate-400" />
               <span>Modelo JSON</span>
@@ -470,7 +628,7 @@ export default function GameIdeaModal({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl bg-dark-800 text-gray-400 hover:text-white transition-colors"
+              className="p-1.5 rounded-xl bg-dark-800 text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -550,7 +708,7 @@ export default function GameIdeaModal({
             }`}
           >
             <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-            <span>3. Mecânicas ({selectedCount})</span>
+            <span>3. Mecânicas & GIFs ({selectedCount})</span>
           </button>
 
           <button
@@ -577,7 +735,6 @@ export default function GameIdeaModal({
           {/* ==================== ABA 1: CONCEITO & PITCH ==================== */}
           {activeTab === 'concept' && (
             <div className="space-y-4 animate-fadeIn">
-              {/* Título */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                   Título do Jogo / Projeto *
@@ -587,12 +744,11 @@ export default function GameIdeaModal({
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ex: Neon Protocol, Hollow Echoes, Chrono Blade..."
+                  placeholder="Ex: Spellchemy, Neon Protocol, Hollow Echoes..."
                   className="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors"
                 />
               </div>
 
-              {/* Grid: Gênero, Plataformas & Público */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
@@ -602,7 +758,7 @@ export default function GameIdeaModal({
                     type="text"
                     value={formData.gdd.genre}
                     onChange={(e) => updateGddField('genre', e.target.value)}
-                    placeholder="Ex: Metroidvania 2D, Roguelite..."
+                    placeholder="Ex: Deckbuilder Tático / Roguelite..."
                     className="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors"
                   />
                 </div>
@@ -615,7 +771,7 @@ export default function GameIdeaModal({
                     type="text"
                     value={formData.gdd.target_platforms}
                     onChange={(e) => updateGddField('target_platforms', e.target.value)}
-                    placeholder="Ex: PC (Steam), Switch, Mobile..."
+                    placeholder="Ex: PC (Steam), Switch..."
                     className="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors"
                   />
                 </div>
@@ -628,13 +784,12 @@ export default function GameIdeaModal({
                     type="text"
                     value={formData.gdd.target_audience}
                     onChange={(e) => updateGddField('target_audience', e.target.value)}
-                    placeholder="Ex: Fãs de Dead Cells e Katana Zero..."
+                    placeholder="Ex: Fãs de Darkest Dungeon e Slay the Spire..."
                     className="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors"
                   />
                 </div>
               </div>
 
-              {/* USP (Diferencial Único) & Referências */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-1.5 flex items-center gap-1.5">
@@ -658,13 +813,12 @@ export default function GameIdeaModal({
                     type="text"
                     value={formData.gdd.references}
                     onChange={(e) => updateGddField('references', e.target.value)}
-                    placeholder="Ex: Celeste, Dead Cells, Katana Zero..."
+                    placeholder="Ex: Darkest Dungeon, Slay the Spire, Stacklands..."
                     className="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors"
                   />
                 </div>
               </div>
 
-              {/* Pitch / Conceito Geral */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                   Conceito Geral / Pitch do Jogo
@@ -678,7 +832,6 @@ export default function GameIdeaModal({
                 />
               </div>
 
-              {/* Imagem de Capa */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                   Imagem de Capa / Concept Art
@@ -694,7 +847,7 @@ export default function GameIdeaModal({
                   <button
                     type="button"
                     onClick={handleSelectLocalImage}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-xs font-bold text-violet-300 border border-dark-700 transition-colors"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-xs font-bold text-violet-300 border border-dark-700 transition-colors cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
                     <span>Arquivo Local</span>
@@ -720,7 +873,6 @@ export default function GameIdeaModal({
           {/* ==================== ABA 2: GAMEPLAY & REGRAS ==================== */}
           {activeTab === 'gameplay' && (
             <div className="space-y-4 animate-fadeIn">
-              {/* Core Loop */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-cyan-300 mb-1.5 flex items-center gap-1.5">
                   <Gamepad2 size={14} />
@@ -730,12 +882,11 @@ export default function GameIdeaModal({
                   rows={3}
                   value={formData.gdd.core_loop}
                   onChange={(e) => updateGddField('core_loop', e.target.value)}
-                  placeholder="Ex: Explorar sala -> Desviar de armadilhas com dash -> Eliminar guardião com projéteis -> Coletar fragmento de código -> Desbloquear atalho."
+                  placeholder="Ex: Base: Incubar e transmutar cartas -> Incursão: Mapa de nós -> Combate em linha 1D com reações elementais -> Retorno e evolução do Império."
                   className="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-cyan-500 transition-colors resize-none leading-relaxed"
                 />
               </div>
 
-              {/* Condições de Vitória e Derrota */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                   Condições de Vitória e Derrota
@@ -744,12 +895,11 @@ export default function GameIdeaModal({
                   rows={2}
                   value={formData.gdd.win_loss_conditions}
                   onChange={(e) => updateGddField('win_loss_conditions', e.target.value)}
-                  placeholder="Ex: Vitória: Sobrecargar o núcleo da IA central. Derrota: Vida zerada ou cronômetro do setor esgotar."
+                  placeholder="Ex: Vitória: Derrotar os Titãs Primordiais. Derrota: Ter os 3 monstros nocauteados na incursão."
                   className="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors resize-none"
                 />
               </div>
 
-              {/* Progressão & Economia */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                   Sistemas de Progressão, Upgrades & Economia
@@ -758,32 +908,42 @@ export default function GameIdeaModal({
                   rows={3}
                   value={formData.gdd.progression_systems}
                   onChange={(e) => updateGddField('progression_systems', e.target.value)}
-                  placeholder="Ex: Árvore de implantes passivos, slots de chips de memória, moedas coletadas em baús para compra com o mercador..."
+                  placeholder="Ex: Meta-hub permanente com edifícios erguidos por cartas, árvore de fórmulas alquímicas e relíquias do Mago..."
                   className="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors resize-none"
                 />
               </div>
             </div>
           )}
 
-          {/* ==================== ABA 3: MECÂNICAS (STACK) ==================== */}
+          {/* ==================== ABA 3: MECÂNICAS & ASSOCIAÇÃO DE GIFS ==================== */}
           {activeTab === 'mechanics' && (
             <div className="space-y-3 animate-fadeIn">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-cyan-400" />
-                    <span>Catálogo de Mecânicas Vinculadas</span>
+                    <span>Catálogo de Mecânicas & GIFs Ilustrativos</span>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold">
                       {selectedCount} selecionada{selectedCount === 1 ? '' : 's'}
                     </span>
                   </h3>
                   <p className="text-xs text-txt-muted mt-0.5">
-                    Marque as mecânicas necessárias para este jogo e registre seu status de integração
+                    Os GIFs são associados automaticamente pelo JSON ou podem ser vinculados manualmente abaixo
                   </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handleBatchAssociateGifs}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all cursor-pointer shrink-0"
+                  title="Selecione múltiplos arquivos GIF de uma pasta para associar automaticamente pelo nome de cada mecânica"
+                >
+                  <FolderUp className="w-3.5 h-3.5" />
+                  <span>Associar GIFs em Lote</span>
+                </button>
               </div>
 
-              {/* Criação Rápida de Mecânica */}
+              {/* Criação Rápida de Mecânica com opção de GIF */}
               <div className="bg-dark-950 p-3 rounded-2xl border border-dark-800 flex flex-col sm:flex-row gap-2 items-center">
                 <input
                   type="text"
@@ -794,8 +954,21 @@ export default function GameIdeaModal({
                 />
                 <button
                   type="button"
+                  onClick={handleSelectQuickMechGif}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+                    quickMechGif
+                      ? 'bg-violet-500/20 text-violet-300 border-violet-500/40'
+                      : 'bg-dark-900 text-slate-400 border-dark-700 hover:text-white'
+                  }`}
+                  title="Selecionar GIF para esta nova mecânica"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>{quickMechGif ? 'GIF Escolhido ✓' : 'GIF'}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setQuickMechImplemented(!quickMechImplemented)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
                     quickMechImplemented
                       ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
                       : 'bg-dark-900 text-slate-400 border-dark-700'
@@ -807,7 +980,7 @@ export default function GameIdeaModal({
                   type="button"
                   onClick={handleQuickAddMechanic}
                   disabled={!quickMechName.trim() || creatingQuickMech}
-                  className="w-full sm:w-auto px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40"
+                  className="w-full sm:w-auto px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 cursor-pointer"
                 >
                   {creatingQuickMech ? 'Criando...' : '+ Adicionar'}
                 </button>
@@ -825,7 +998,7 @@ export default function GameIdeaModal({
                 />
               </div>
 
-              {/* Lista de Mecânicas */}
+              {/* Lista de Mecânicas com Preview do GIF e Botão de Associar GIF */}
               <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
                 {filteredMechanics.length === 0 ? (
                   <div className="p-4 text-center text-xs text-txt-muted bg-dark-950 rounded-xl border border-dark-800">
@@ -835,6 +1008,7 @@ export default function GameIdeaModal({
                   filteredMechanics.map((mech) => {
                     const isSelected = Boolean(formData.selectedMechanics[mech.id]);
                     const linkData = formData.selectedMechanics[mech.id] || {};
+                    const mechGif = resolveMedia(mech.gif_url);
 
                     return (
                       <div
@@ -846,16 +1020,41 @@ export default function GameIdeaModal({
                         }`}
                       >
                         <div className="flex items-center justify-between gap-3">
-                          <label className="flex items-center gap-2.5 cursor-pointer flex-1">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleMechanic(mech.id)}
-                              className="w-4 h-4 rounded text-cyan-500 focus:ring-0 cursor-pointer"
+                              className="w-4 h-4 rounded text-cyan-500 focus:ring-0 cursor-pointer shrink-0"
                             />
-                            <div>
-                              <div className="text-xs font-bold text-white flex items-center gap-2">
-                                <span>{mech.name}</span>
+
+                            {/* Miniatura do GIF da Mecânica */}
+                            {mechGif ? (
+                              <img
+                                src={mechGif}
+                                alt={mech.name}
+                                onClick={() => handleAssignGifToExistingMechanic(mech)}
+                                title="Clique para alterar o GIF desta mecânica"
+                                className="w-14 h-10 rounded-lg object-cover border border-dark-700 cursor-pointer hover:border-violet-400 transition-colors shrink-0"
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleAssignGifToExistingMechanic(mech)}
+                                title="Clique para associar um GIF animado a esta mecânica"
+                                className="w-14 h-10 rounded-lg bg-dark-900 border border-dashed border-dark-700 hover:border-violet-400 flex flex-col items-center justify-center text-slate-500 hover:text-violet-300 transition-colors shrink-0 cursor-pointer"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5" />
+                                <span className="text-[8px] font-bold">+GIF</span>
+                              </button>
+                            )}
+
+                            <div
+                              onClick={() => toggleMechanic(mech.id)}
+                              className="cursor-pointer flex-1 min-w-0"
+                            >
+                              <div className="text-xs font-bold text-white flex items-center gap-2 flex-wrap">
+                                <span className="truncate">{mech.name}</span>
                                 {mech.is_implemented ? (
                                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
                                     <Sparkles size={10} />
@@ -874,27 +1073,39 @@ export default function GameIdeaModal({
                                 </p>
                               )}
                             </div>
-                          </label>
+                          </div>
 
-                          {isSelected && (
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               type="button"
-                              onClick={() =>
-                                updateMechanicLink(
-                                  mech.id,
-                                  'is_integrated',
-                                  !linkData.is_integrated
-                                )
-                              }
-                              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors ${
-                                linkData.is_integrated
-                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                  : 'bg-dark-900 text-slate-400 border-dark-700 hover:border-dark-600'
-                              }`}
+                              onClick={() => handleAssignGifToExistingMechanic(mech)}
+                              className="px-2 py-1 rounded-lg bg-dark-900 hover:bg-dark-800 text-violet-300 border border-dark-700 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Associar ou trocar GIF desta mecânica"
                             >
-                              {linkData.is_integrated ? '✓ Integrada no Jogo' : 'Não Integrada'}
+                              <ImageIcon className="w-3 h-3" />
+                              <span>{mech.gif_url ? 'Trocar GIF' : 'Associar GIF'}</span>
                             </button>
-                          )}
+
+                            {isSelected && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateMechanicLink(
+                                    mech.id,
+                                    'is_integrated',
+                                    !linkData.is_integrated
+                                  )
+                                }
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
+                                  linkData.is_integrated
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                    : 'bg-dark-900 text-slate-400 border-dark-700 hover:border-dark-600'
+                                }`}
+                              >
+                                {linkData.is_integrated ? '✓ Integrada' : 'Não Integrada'}
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Nota contextual se selecionada */}
@@ -906,7 +1117,7 @@ export default function GameIdeaModal({
                               onChange={(e) =>
                                 updateMechanicLink(mech.id, 'notes', e.target.value)
                               }
-                              placeholder="Notas específicas deste jogo (ex: Pulo duplo com asas, Dash com 12 frames de invulnerabilidade)..."
+                              placeholder="Notas específicas deste jogo para esta mecânica..."
                               className="w-full bg-dark-900 border border-dark-750 rounded-lg px-2.5 py-1 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-cyan-500"
                             />
                           </div>
@@ -922,7 +1133,6 @@ export default function GameIdeaModal({
           {/* ==================== ABA 4: ARTE, LORE & TÉCNICO ==================== */}
           {activeTab === 'art_tech' && (
             <div className="space-y-4 animate-fadeIn">
-              {/* Estilo Visual & Áudio */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
@@ -933,7 +1143,7 @@ export default function GameIdeaModal({
                     rows={2}
                     value={formData.gdd.art_style}
                     onChange={(e) => updateGddField('art_style', e.target.value)}
-                    placeholder="Ex: Pixel Art 16-bit com iluminação dinâmica 2D neon volumétrica..."
+                    placeholder="Ex: Pixel Art 2D gótica/arcana com animações de impacto estilo Darkest Dungeon..."
                     className="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors resize-none"
                   />
                 </div>
@@ -946,13 +1156,12 @@ export default function GameIdeaModal({
                     rows={2}
                     value={formData.gdd.audio_style}
                     onChange={(e) => updateGddField('audio_style', e.target.value)}
-                    placeholder="Ex: Trilha synthwave sombria, batidas eletrônicas industriais e SFX mecânicos pesados..."
+                    placeholder="Ex: Trilha medieval mística com sintetizadores sombrios e SFX táteis de vidro e runas..."
                     className="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors resize-none"
                   />
                 </div>
               </div>
 
-              {/* Narrativa / Lore */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
                   <FileText size={13} />
@@ -962,12 +1171,11 @@ export default function GameIdeaModal({
                   rows={3}
                   value={formData.gdd.narrative_setting}
                   onChange={(e) => updateGddField('narrative_setting', e.target.value)}
-                  placeholder="Ex: Em uma megacidade subterrânea controlada por uma IA tirânica, o protagonista é uma sentinela renegada..."
+                  placeholder="Ex: Fronteira mágica selvagem onde impérios antigos caíram perante feras corrompidas..."
                   className="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500 transition-colors resize-none leading-relaxed"
                 />
               </div>
 
-              {/* Engine & Escopo do MVP */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
@@ -990,7 +1198,7 @@ export default function GameIdeaModal({
                     type="text"
                     value={formData.gdd.mvp_scope}
                     onChange={(e) => updateGddField('mvp_scope', e.target.value)}
-                    placeholder="Ex: 1 bioma, 3 inimigos, 1 miniboss e as 5 mecânicas base."
+                    placeholder="Ex: 1 bioma, 3 monstros jogáveis, 4 reações elementais e 1 chefe."
                     className="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
@@ -1001,9 +1209,9 @@ export default function GameIdeaModal({
           {/* Footer Actions */}
           <div className="pt-4 border-t border-dark-750 flex items-center justify-between gap-3 shrink-0">
             <div className="text-[11px] text-txt-muted">
-              {activeTab === 'concept' && 'Dica: Você pode preencher manualmente ou clicar em "Importar GDD (.json)".'}
+              {activeTab === 'concept' && 'Dica: Ao importar o JSON, os GIFs das mecânicas já são vinculados automaticamente.'}
               {activeTab === 'gameplay' && 'Defina o core loop para orientar a integração de mecânicas.'}
-              {activeTab === 'mechanics' && `${selectedCount} mecânica(s) conectada(s) a este jogo.`}
+              {activeTab === 'mechanics' && 'Clique em "Trocar GIF" em qualquer mecânica ou use "Associar GIFs em Lote".'}
               {activeTab === 'art_tech' && 'Defina a direção estética e o escopo do MVP.'}
             </div>
 

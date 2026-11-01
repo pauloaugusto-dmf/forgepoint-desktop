@@ -83,6 +83,14 @@ app.whenReady().then(async () => {
         filePath = filePath.slice(1);
       }
       let decodedPath = decodeURIComponent(filePath);
+      // No Windows, URLs com standard: true podem normalizar "C:/Users/..." para "c/Users/..."
+      if (
+        process.platform === 'win32' &&
+        /^[a-zA-Z]\//.test(decodedPath) &&
+        !decodedPath.startsWith('src/')
+      ) {
+        decodedPath = decodedPath[0].toUpperCase() + ':' + decodedPath.slice(1);
+      }
       if (!path.isAbsolute(decodedPath)) {
         decodedPath = path.join(app.getAppPath(), decodedPath);
       }
