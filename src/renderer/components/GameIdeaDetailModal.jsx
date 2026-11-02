@@ -300,15 +300,15 @@ export default function GameIdeaDetailModal({
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-fadeIn">
               {/* Pitch Principal & Premissa */}
-              <div className="bg-gradient-to-br from-violet-950/20 via-dark-950 to-dark-950 border border-violet-500/25 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-violet-950/25 via-dark-950 to-dark-950 border border-violet-500/30 rounded-2xl p-5 sm:p-6 shadow-lg shadow-violet-500/5 space-y-3 relative overflow-hidden">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-violet-400 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
                     Pitch & Visão Criativa
                   </span>
                   {gdd.target_audience && (
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      Público: <strong className="text-slate-200">{gdd.target_audience}</strong>
+                    <span className="text-xs text-slate-400 font-medium bg-dark-900/90 px-3 py-1 rounded-full border border-dark-800">
+                      Público-Alvo: <strong className="text-slate-200">{gdd.target_audience}</strong>
                     </span>
                   )}
                 </div>
@@ -326,8 +326,8 @@ export default function GameIdeaDetailModal({
                   Ficha Técnica & Especificações
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                  <div className="bg-dark-950 border border-dark-800 rounded-2xl p-4 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-txt-muted flex items-center gap-1.5 mb-1.5">
+                  <div className="bg-dark-950 border border-dark-800 hover:border-dark-700 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-colors">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-txt-muted flex items-center gap-1.5 mb-2">
                       <Gamepad2 className="w-3.5 h-3.5 text-violet-400" />
                       Gênero
                     </span>
@@ -336,8 +336,8 @@ export default function GameIdeaDetailModal({
                     </p>
                   </div>
 
-                  <div className="bg-dark-950 border border-dark-800 rounded-2xl p-4 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-txt-muted flex items-center gap-1.5 mb-1.5">
+                  <div className="bg-dark-950 border border-dark-800 hover:border-dark-700 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-colors">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-txt-muted flex items-center gap-1.5 mb-2">
                       <Code2 className="w-3.5 h-3.5 text-cyan-400" />
                       Engine / Tecnologia
                     </span>
@@ -346,8 +346,8 @@ export default function GameIdeaDetailModal({
                     </p>
                   </div>
 
-                  <div className="bg-dark-950 border border-dark-800 rounded-2xl p-4 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-txt-muted flex items-center gap-1.5 mb-1.5">
+                  <div className="bg-dark-950 border border-dark-800 hover:border-dark-700 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-colors">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-txt-muted flex items-center gap-1.5 mb-2">
                       <Target className="w-3.5 h-3.5 text-emerald-400" />
                       Plataformas
                     </span>
@@ -356,8 +356,8 @@ export default function GameIdeaDetailModal({
                     </p>
                   </div>
 
-                  <div className="bg-dark-950 border border-dark-800 rounded-2xl p-4 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-txt-muted flex items-center gap-1.5 mb-1.5">
+                  <div className="bg-dark-950 border border-dark-800 hover:border-dark-700 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-colors">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-txt-muted flex items-center gap-1.5 mb-2">
                       <Palette className="w-3.5 h-3.5 text-amber-400" />
                       Estilo Visual
                     </span>
@@ -371,10 +371,10 @@ export default function GameIdeaDetailModal({
               {/* Destaque: USP & Core Gameplay Loop */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* USP / Gancho */}
-                <div className="bg-amber-950/15 border border-amber-500/25 rounded-2xl p-4.5 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      <Sparkles className="w-4 h-4" />
+                <div className="bg-gradient-to-br from-amber-950/25 via-dark-950 to-dark-950 border border-amber-500/30 rounded-2xl p-5 sm:p-6 space-y-3.5 shadow-lg shadow-amber-500/5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                      <Sparkles className="w-4 h-4 text-amber-400" />
                     </div>
                     <div>
                       <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300">
@@ -383,18 +383,24 @@ export default function GameIdeaDetailModal({
                       <p className="text-[11px] text-amber-400/80">O que torna este jogo especial e vendável</p>
                     </div>
                   </div>
-                  <p className="text-xs text-amber-100/90 leading-relaxed font-medium pl-1">
-                    {gdd.usp || (
-                      <span className="text-dark-600 italic">Nenhum diferencial único (USP) detalhado ainda.</span>
+                  <div>
+                    {gdd.usp ? (
+                      <p className="text-sm text-amber-100/90 leading-relaxed font-medium">
+                        {gdd.usp}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-dark-600 italic">
+                        Nenhum diferencial único (USP) detalhado ainda.
+                      </p>
                     )}
-                  </p>
+                  </div>
                 </div>
 
                 {/* Core Gameplay Loop */}
-                <div className="bg-cyan-950/15 border border-cyan-500/25 rounded-2xl p-4.5 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                      <Gamepad2 className="w-4 h-4" />
+                <div className="bg-gradient-to-br from-cyan-950/25 via-dark-950 to-dark-950 border border-cyan-500/30 rounded-2xl p-5 sm:p-6 space-y-3.5 shadow-lg shadow-cyan-500/5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0">
+                      <Gamepad2 className="w-4 h-4 text-cyan-400" />
                     </div>
                     <div>
                       <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-300">
@@ -403,33 +409,47 @@ export default function GameIdeaDetailModal({
                       <p className="text-[11px] text-cyan-400/80">Ciclo minuto a minuto do jogador</p>
                     </div>
                   </div>
-                  <p className="text-xs text-cyan-100/90 leading-relaxed font-medium pl-1">
-                    {gdd.core_loop || (
-                      <span className="text-dark-600 italic">Core loop de gameplay ainda não registrado.</span>
+                  <div>
+                    {gdd.core_loop ? (
+                      <p className="text-sm text-cyan-100/90 leading-relaxed font-medium whitespace-pre-line">
+                        {gdd.core_loop}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-dark-600 italic">
+                        Core loop de gameplay ainda não registrado.
+                      </p>
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
 
               {/* Escopo MVP & Referências */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-dark-950 border border-emerald-500/20 bg-emerald-500/5 rounded-2xl p-4 space-y-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5" />
-                    Escopo do MVP (Primeira Demo Jogável)
-                  </span>
-                  <p className="text-xs text-emerald-200/90 leading-relaxed">
+                <div className="bg-gradient-to-br from-emerald-950/20 via-dark-950 to-dark-950 border border-emerald-500/25 rounded-2xl p-5 space-y-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                      <Layers className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                      Escopo do MVP (Primeira Demo Jogável)
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-200/90 leading-relaxed font-medium">
                     {gdd.mvp_scope || (
                       <span className="text-dark-600 italic">Escopo do MVP não definido.</span>
                     )}
                   </p>
                 </div>
 
-                <div className="bg-dark-950 border border-dark-800 rounded-2xl p-4 space-y-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-violet-400" />
-                    Inspirações & Referências
-                  </span>
+                <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 space-y-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-violet-500/20 text-violet-300 border border-violet-500/30 shrink-0">
+                      <FileText className="w-4 h-4 text-violet-400" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Inspirações & Referências
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-300 leading-relaxed">
                     {gdd.references || (
                       <span className="text-dark-600 italic">Nenhuma referência registrada.</span>
@@ -439,7 +459,7 @@ export default function GameIdeaDetailModal({
               </div>
 
               {/* Painel de Progresso Técnico das Mecânicas (Com Call-to-Action) */}
-              <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 space-y-4">
+              <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 sm:p-6 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
@@ -465,7 +485,7 @@ export default function GameIdeaDetailModal({
 
                 {/* Duas Barras de Progresso Executivas */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="bg-dark-900 border border-dark-750 rounded-xl p-3.5 space-y-2">
+                  <div className="bg-dark-900 border border-dark-750 rounded-xl p-4 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-cyan-300 flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5" />
@@ -483,7 +503,7 @@ export default function GameIdeaDetailModal({
                     </div>
                   </div>
 
-                  <div className="bg-dark-900 border border-dark-750 rounded-xl p-3.5 space-y-2">
+                  <div className="bg-dark-900 border border-dark-750 rounded-xl p-4 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-emerald-400 flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -502,22 +522,28 @@ export default function GameIdeaDetailModal({
                   </div>
                 </div>
 
-                {/* Mini Preview das Mecânicas */}
+                {/* Mini Preview das Mecânicas Interativo */}
                 {totalMechs > 0 && (
                   <div className="pt-2 border-t border-dark-800/80">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                      Amostra das Mecânicas Vinculadas:
+                      Mecânicas Vinculadas (Clique para filtrar na aba):
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      {mechs.slice(0, 6).map((m) => (
-                        <span
+                      {mechs.slice(0, 8).map((m) => (
+                        <button
                           key={m.id}
-                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${
+                          type="button"
+                          onClick={() => {
+                            setMechSearch(m.name);
+                            setActiveTab('mechanics');
+                          }}
+                          title={`Clique para visualizar e gerenciar "${m.name}"`}
+                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer hover:scale-105 ${
                             m.is_integrated
-                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25'
                               : m.is_implemented
-                              ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
-                              : 'bg-dark-900 text-slate-400 border-dark-750'
+                              ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40 hover:bg-cyan-500/25'
+                              : 'bg-dark-900 text-slate-400 border-dark-750 hover:text-white'
                           }`}
                         >
                           {m.is_integrated ? (
@@ -528,15 +554,18 @@ export default function GameIdeaDetailModal({
                             <Wrench className="w-3 h-3 text-slate-500" />
                           )}
                           <span>{m.name}</span>
-                        </span>
+                        </button>
                       ))}
-                      {totalMechs > 6 && (
+                      {totalMechs > 8 && (
                         <button
                           type="button"
-                          onClick={() => setActiveTab('mechanics')}
+                          onClick={() => {
+                            setMechSearch('');
+                            setActiveTab('mechanics');
+                          }}
                           className="text-xs font-bold px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-dark-800 text-violet-300 border border-dark-750 cursor-pointer"
                         >
-                          +{totalMechs - 6} outras mecânicas...
+                          +{totalMechs - 8} outras mecânicas...
                         </button>
                       )}
                     </div>
@@ -558,8 +587,18 @@ export default function GameIdeaDetailModal({
                     value={mechSearch}
                     onChange={(e) => setMechSearch(e.target.value)}
                     placeholder="Filtrar mecânicas deste jogo..."
-                    className="w-full bg-dark-900 border border-dark-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500"
+                    className="w-full bg-dark-900 border border-dark-700 rounded-xl pl-9 pr-8 py-1.5 text-xs text-white placeholder-txt-muted focus:outline-none focus:border-violet-500"
                   />
+                  {mechSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setMechSearch('')}
+                      className="absolute right-2.5 top-2 text-slate-400 hover:text-white transition-colors cursor-pointer p-0.5"
+                      title="Limpar filtro"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -738,38 +777,38 @@ export default function GameIdeaDetailModal({
 
           {/* ==================== TAB 3: GDD COMPLETO ==================== */}
           {activeTab === 'gdd' && (
-            <div className="space-y-5 animate-fadeIn">
+            <div className="space-y-6 animate-fadeIn">
               {/* Gameplay & Regras */}
-              <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 space-y-4">
+              <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 sm:p-6 space-y-5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
                   <Gamepad2 className="w-4 h-4" />
                   Mecânicas, Regras & Core Loop
                 </h4>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                       Core Gameplay Loop:
                     </span>
-                    <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                    <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                       {gdd.core_loop || <span className="text-dark-600 italic">Não especificado</span>}
                     </p>
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                       Condições de Vitória e Derrota:
                     </span>
-                    <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                    <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                       {gdd.win_loss_conditions || <span className="text-dark-600 italic">Não especificado</span>}
                     </p>
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                       Sistemas de Progressão, Upgrades & Economia:
                     </span>
-                    <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                    <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                       {gdd.progression_systems || <span className="text-dark-600 italic">Não especificado</span>}
                     </p>
                   </div>
@@ -777,7 +816,7 @@ export default function GameIdeaDetailModal({
               </div>
 
               {/* Arte, Áudio e Narrativa */}
-              <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 space-y-4">
+              <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 sm:p-6 space-y-5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
                   <Palette className="w-4 h-4" />
                   Estética, Áudio & Narrativa
@@ -785,36 +824,36 @@ export default function GameIdeaDetailModal({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                       Estilo Visual & Arte:
                     </span>
-                    <p className="text-xs text-slate-200 leading-relaxed bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                    <p className="text-sm text-slate-200 leading-relaxed bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                       {gdd.art_style || <span className="text-dark-600 italic">Não especificado</span>}
                     </p>
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                       Direção de Áudio & Trilha:
                     </span>
-                    <p className="text-xs text-slate-200 leading-relaxed bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                    <p className="text-sm text-slate-200 leading-relaxed bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                       {gdd.audio_style || <span className="text-dark-600 italic">Não especificado</span>}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                     Narrativa, Universo & Lore:
                   </span>
-                  <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                  <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                     {gdd.narrative_setting || <span className="text-dark-600 italic">Não especificado</span>}
                   </p>
                 </div>
               </div>
 
               {/* Produção & Escopo MVP */}
-              <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 space-y-4">
+              <div className="bg-dark-950 border border-dark-800 rounded-2xl p-5 sm:p-6 space-y-5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
                   <Target className="w-4 h-4" />
                   Planejamento de Produção & MVP
@@ -822,29 +861,29 @@ export default function GameIdeaDetailModal({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                       Engine / Tecnologia:
                     </span>
-                    <p className="text-xs font-bold text-white bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                    <p className="text-sm font-bold text-white bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                       {gdd.engine || <span className="text-dark-600 font-normal italic">Não especificada</span>}
                     </p>
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                       Diferencial Único (USP):
                     </span>
-                    <p className="text-xs font-medium text-amber-300 bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                    <p className="text-sm font-medium text-amber-300 bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                       {gdd.usp || <span className="text-dark-600 font-normal italic">Não especificado</span>}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block mb-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block mb-1.5">
                     Escopo do MVP (Primeira Demo Jogável):
                   </span>
-                  <p className="text-xs text-emerald-200/95 leading-relaxed bg-dark-900 p-3.5 rounded-xl border border-dark-800">
+                  <p className="text-sm text-emerald-200/95 leading-relaxed bg-dark-900 p-4 sm:p-5 rounded-2xl border border-dark-800">
                     {gdd.mvp_scope || <span className="text-dark-600 italic">Não especificado</span>}
                   </p>
                 </div>

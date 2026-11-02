@@ -14,6 +14,7 @@ import {
   Filter,
   ArrowRight,
   ExternalLink,
+  X,
 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 
@@ -379,8 +380,18 @@ export default function App() {
                   ? 'Buscar ideias de jogos ou mecânicas vinculadas...'
                   : 'Buscar mecânicas por nome, descrição ou jogo...'
               }
-              className="w-full bg-dark-950 border border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-txt-muted focus:outline-none focus:border-violet-500"
+              className="w-full bg-dark-950 border border-dark-700 rounded-xl pl-10 pr-9 py-2 text-sm text-white placeholder-txt-muted focus:outline-none focus:border-violet-500"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-white transition-colors cursor-pointer p-0.5"
+                title="Limpar busca"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -561,7 +572,7 @@ export default function App() {
                       </div>
 
                       {/* Título e Descrição */}
-                      <div className="p-4 space-y-2.5">
+                      <div className="p-5 space-y-3">
                         <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
                           {idea.title}
                         </h3>
@@ -625,7 +636,7 @@ export default function App() {
                     </div>
 
                     {/* Barra de Progresso no Rodapé do Card */}
-                    <div className="px-4 pb-3.5 pt-1">
+                    <div className="px-5 pb-4 pt-1">
                       <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium mb-1">
                         <span>Integração no Jogo</span>
                         <span className="text-emerald-400 font-bold">{integratedPct}%</span>
@@ -743,7 +754,7 @@ export default function App() {
                       </div>
 
                       {/* Info da Mecânica */}
-                      <div className="p-4 space-y-2.5">
+                      <div className="p-5 space-y-3">
                         <h3 className="text-base font-bold text-white">{mech.name}</h3>
                         {mech.description ? (
                           <p className="text-xs text-txt-muted line-clamp-2 leading-relaxed min-h-[32px]">
