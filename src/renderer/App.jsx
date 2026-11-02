@@ -12,6 +12,8 @@ import {
   Layers,
   Gamepad2,
   Filter,
+  ArrowRight,
+  ExternalLink,
 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 
@@ -473,7 +475,7 @@ export default function App() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredIdeas.map((idea) => {
                 const mechs = idea.mechanics || [];
                 const totalMechs = mechs.length;
@@ -481,7 +483,10 @@ export default function App() {
                 const integratedCount = mechs.filter((m) => m.is_integrated).length;
                 const readyPct =
                   totalMechs > 0 ? Math.round((implementedCount / totalMechs) * 100) : 0;
+                const integratedPct =
+                  totalMechs > 0 ? Math.round((integratedCount / totalMechs) * 100) : 0;
                 const imgUrl = resolveMedia(idea.image_url);
+                const gdd = idea.gdd || {};
 
                 return (
                   <div
@@ -504,6 +509,20 @@ export default function App() {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent" />
+
+                        {/* Badges no Topo da Imagem */}
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap max-w-[70%]">
+                          {gdd.genre && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-slate-200 border border-white/10 truncate max-w-[130px]">
+                              {gdd.genre}
+                            </span>
+                          )}
+                          {gdd.engine && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950/80 backdrop-blur-md text-cyan-300 border border-cyan-500/30">
+                              {gdd.engine}
+                            </span>
+                          )}
+                        </div>
 
                         {/* Quick Action Buttons */}
                         <div
@@ -529,68 +548,76 @@ export default function App() {
                         </div>
 
                         {/* Badges de Prontidão */}
-                        <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-cyan-300 border border-cyan-500/30">
-                            {implementedCount}/{totalMechs} prontas no catálogo
+                        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between gap-1 text-[11px] font-bold">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-cyan-300 border border-cyan-500/30">
+                            <Sparkles className="w-3 h-3 text-cyan-400" />
+                            <span>{implementedCount}/{totalMechs} prontas</span>
                           </span>
-                          {totalMechs > 0 && (
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-emerald-300 border border-emerald-500/30">
-                              {integratedCount}/{totalMechs} integradas
-                            </span>
-                          )}
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-emerald-300 border border-emerald-500/30">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            <span>{integratedCount}/{totalMechs} integradas</span>
+                          </span>
                         </div>
                       </div>
 
                       {/* Título e Descrição */}
-                      <div className="p-5 space-y-3">
-                        <h3 className="text-lg font-bold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
+                      <div className="p-4 space-y-2.5">
+                        <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
                           {idea.title}
                         </h3>
 
                         {idea.description ? (
-                          <p className="text-xs text-txt-muted line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-txt-muted line-clamp-2 leading-relaxed min-h-[32px]">
                             {idea.description}
                           </p>
                         ) : (
-                          <p className="text-xs text-dark-600 italic">Sem descrição informada.</p>
+                          <p className="text-xs text-dark-600 italic min-h-[32px]">Sem descrição informada.</p>
                         )}
 
-                        {/* Pills de Mecânicas */}
-                        <div className="pt-2 space-y-2">
-                          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                            <span>Mecânicas ({totalMechs})</span>
-                            {totalMechs > 0 && (
-                              <span className="text-cyan-400">{readyPct}% reaproveitável</span>
-                            )}
+                        {/* Preview Compacto de Mecânicas */}
+                        <div className="pt-2 border-t border-dark-800/80 space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                            <span className="flex items-center gap-1 text-slate-300 font-bold">
+                              <Cpu className="w-3.5 h-3.5 text-violet-400" />
+                              <span>{totalMechs} {totalMechs === 1 ? 'Mecânica' : 'Mecânicas'}</span>
+                            </span>
+                            <span className="text-cyan-400 font-bold">{readyPct}% prontas</span>
                           </div>
 
                           {totalMechs === 0 ? (
-                            <div className="text-xs text-txt-muted italic">
-                              Nenhuma mecânica marcada
+                            <div className="text-[11px] text-slate-500 italic py-0.5">
+                              Nenhuma mecânica vinculada
                             </div>
                           ) : (
-                            <div className="flex flex-wrap gap-1.5">
-                              {mechs.map((m) => (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {mechs.slice(0, 2).map((m) => (
                                 <span
                                   key={m.id}
-                                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border ${
+                                  className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md border truncate max-w-[130px] ${
                                     m.is_integrated
-                                      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+                                      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
                                       : m.is_implemented
-                                      ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
-                                      : 'bg-dark-950 text-slate-400 border-dark-700'
+                                      ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'
+                                      : 'bg-dark-950 text-slate-400 border-dark-750'
                                   }`}
+                                  title={m.name}
                                 >
                                   {m.is_integrated ? (
-                                    <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
                                   ) : m.is_implemented ? (
-                                    <Sparkles className="w-3 h-3 text-cyan-300 shrink-0" />
+                                    <Sparkles className="w-2.5 h-2.5 text-cyan-300 shrink-0" />
                                   ) : (
-                                    <Wrench className="w-3 h-3 text-slate-500 shrink-0" />
+                                    <Wrench className="w-2.5 h-2.5 text-slate-500 shrink-0" />
                                   )}
-                                  <span>{m.name}</span>
+                                  <span className="truncate">{m.name}</span>
                                 </span>
                               ))}
+
+                              {totalMechs > 2 && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-dark-950 text-violet-300 border border-violet-500/30">
+                                  +{totalMechs - 2}
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
@@ -598,11 +625,15 @@ export default function App() {
                     </div>
 
                     {/* Barra de Progresso no Rodapé do Card */}
-                    <div className="px-5 pb-4 pt-2">
-                      <div className="w-full h-1.5 bg-dark-800 rounded-full overflow-hidden">
+                    <div className="px-4 pb-3.5 pt-1">
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium mb-1">
+                        <span>Integração no Jogo</span>
+                        <span className="text-emerald-400 font-bold">{integratedPct}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-dark-950 rounded-full overflow-hidden border border-dark-800">
                         <div
-                          className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-300"
-                          style={{ width: `${readyPct}%` }}
+                          className="h-full bg-gradient-to-r from-violet-500 via-cyan-500 to-emerald-400 transition-all duration-300"
+                          style={{ width: `${integratedPct}%` }}
                         />
                       </div>
                     </div>
@@ -634,7 +665,7 @@ export default function App() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredMechanics.map((mech) => {
                 const gifUrl = resolveMedia(mech.gif_url);
                 const usedIn = mech.used_in_games || [];
@@ -650,7 +681,7 @@ export default function App() {
                   >
                     <div>
                       {/* GIF Showcase */}
-                      <div className="relative h-48 bg-dark-950 border-b border-dark-800 flex items-center justify-center overflow-hidden">
+                      <div className="relative h-44 bg-dark-950 border-b border-dark-800 flex items-center justify-center overflow-hidden">
                         {gifUrl ? (
                           <img
                             src={gifUrl}
@@ -712,18 +743,18 @@ export default function App() {
                       </div>
 
                       {/* Info da Mecânica */}
-                      <div className="p-5 space-y-3">
-                        <h3 className="text-lg font-bold text-white">{mech.name}</h3>
+                      <div className="p-4 space-y-2.5">
+                        <h3 className="text-base font-bold text-white">{mech.name}</h3>
                         {mech.description ? (
-                          <p className="text-xs text-txt-muted leading-relaxed">
+                          <p className="text-xs text-txt-muted line-clamp-2 leading-relaxed min-h-[32px]">
                             {mech.description}
                           </p>
                         ) : (
-                          <p className="text-xs text-dark-600 italic">Sem descrição técnica.</p>
+                          <p className="text-xs text-dark-600 italic min-h-[32px]">Sem descrição técnica.</p>
                         )}
 
                         {/* Usada em Jogos */}
-                        <div className="pt-2 border-t border-dark-800 space-y-2">
+                        <div className="pt-2 border-t border-dark-800/80 space-y-1.5">
                           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                             <Layers className="w-3.5 h-3.5 text-violet-400" />
                             <span>
@@ -732,26 +763,32 @@ export default function App() {
                           </div>
 
                           {usedIn.length === 0 ? (
-                            <p className="text-xs text-txt-muted italic">
-                              Ainda não vinculada a nenhuma ideia de jogo.
+                            <p className="text-[11px] text-txt-muted italic py-0.5">
+                              Ainda não vinculada a nenhum jogo.
                             </p>
                           ) : (
                             <div className="flex flex-wrap gap-1.5">
-                              {usedIn.map((gameRef) => (
+                              {usedIn.slice(0, 3).map((gameRef) => (
                                 <span
                                   key={gameRef.game_idea_id}
-                                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border ${
+                                  className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md border truncate max-w-[140px] ${
                                     gameRef.is_integrated
                                       ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
                                       : 'bg-violet-500/15 text-violet-200 border-violet-500/35'
                                   }`}
+                                  title={gameRef.title}
                                 >
                                   {gameRef.is_integrated && (
-                                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
                                   )}
-                                  <span>{gameRef.title}</span>
+                                  <span className="truncate">{gameRef.title}</span>
                                 </span>
                               ))}
+                              {usedIn.length > 3 && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-dark-950 text-slate-400 border border-dark-750">
+                                  +{usedIn.length - 3}
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
