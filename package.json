@@ -1,6 +1,6 @@
 {
   "name": "forgepoint-desktop",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Gerenciador de ideias de jogos e catálogo de mecânicas reutilizáveis para desktop",
   "author": "Forgepoint",
   "main": "src/main/main.js",

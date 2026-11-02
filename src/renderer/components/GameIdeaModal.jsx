@@ -39,7 +39,14 @@ const DEFAULT_GDD = {
 
 // Mapeamento inteligente de palavras-chave para os GIFs de mecânicas embutidos
 const BUILTIN_GIF_MATCHERS = [
-  { keywords: ['fsm', 'turnos', 'ciclo'], file: 'src/assets/mechanics/fsm_turnos.gif' },
+  { keywords: ['dia & noite', 'dia e noite', 'preparo vs'], file: 'src/assets/mechanics/ciclo_dia_noite.gif' },
+  { keywords: ['grid de construcao', 'grid de construção', 'decoracao de quartos', 'decoração de quartos', 'cross-section'], file: 'src/assets/mechanics/grid_construcao_quartos.gif' },
+  { keywords: ['alocacao de hospedes', 'alocação de hóspedes', 'vizinhanca', 'vizinhança'], file: 'src/assets/mechanics/alocacao_vizinhanca.gif' },
+  { keywords: ['traits', 'fobias', 'satisfacao', 'satisfação'], file: 'src/assets/mechanics/traits_satisfacao.gif' },
+  { keywords: ['room service', 'baloes de pedido', 'balões de pedido', 'diegeticos', 'diegéticos'], file: 'src/assets/mechanics/room_service_baloes.gif' },
+  { keywords: ['pathfinding fantasma', 'intangivel', 'intangível', 'movimentacao fantasma', 'movimentação fantasma'], file: 'src/assets/mechanics/pathfinding_fantasma.gif' },
+  { keywords: ['sombroedas', 'economia dupla', 'check-out'], file: 'src/assets/mechanics/economia_sombroedas.gif' },
+  { keywords: ['fsm de combate', 'fases de turno', 'turn manager', 'turnos'], file: 'src/assets/mechanics/fsm_turnos.gif' },
   { keywords: ['ranks', 'posicoes', 'posições', '1d'], file: 'src/assets/mechanics/ranks_posicoes.gif' },
   { keywords: ['alvos restritos', 'alcance'], file: 'src/assets/mechanics/alvos_restritos.gif' },
   { keywords: ['camera', 'câmera', 'impacto', 'punch'], file: 'src/assets/mechanics/camera_impacto.gif' },

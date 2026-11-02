@@ -1125,8 +1125,281 @@ def generate_18_inventario_reagentes():
     save_gif(frames, "inventario_reagentes.gif")
 
 
+# =========================================================
+# AS 7 NOVAS MECÂNICAS DO GHOST HOTEL (COZY MANAGEMENT)
+# =========================================================
+
+# 19. Ciclo Dia & Noite (Fase de Preparo vs Serviço)
+def generate_gh_1_ciclo_dia_noite():
+    frames = []
+    total_frames = 30
+    for f in range(total_frames):
+        is_night = f >= 15
+        im = Image.new("RGB", (WIDTH, HEIGHT), (11, 15, 23))
+        draw = ImageDraw.Draw(im)
+        draw_background(
+            draw,
+            "CICLO DIA (PREPARO) & NOITE (CHECK-IN)",
+            floor=True,
+        )
+
+        # Céu / Indicador Solar vs Lunar
+        if not is_night:
+            draw.rounded_rectangle(
+                [25, 38, 335, 82], radius=8, fill=(120, 53, 15), outline=(251, 191, 36), width=2
+            )
+            draw.ellipse([42, 46, 70, 74], fill=(250, 204, 21))
+            draw.text((84, 48), "DIA: CONSTRUIR & DECORAR", fill=(254, 240, 138))
+            draw.text((84, 63), "Fantasmas dormindo | Low Stress", fill=(253, 224, 71))
+        else:
+            draw.rounded_rectangle(
+                [25, 38, 335, 82], radius=8, fill=(30, 27, 75), outline=(167, 139, 250), width=2
+            )
+            draw.ellipse([42, 46, 70, 74], fill=(221, 214, 254))
+            draw.text((84, 48), "NOITE: CHECK-IN & ROOM SERVICE", fill=(233, 213, 255))
+            draw.text((84, 63), "Hotel Aberto! Recebendo Hospedes", fill=(196, 181, 253))
+
+        # Hotel silhueta abaixo
+        draw.rounded_rectangle(
+            [95, 96, 265, 182], radius=6, fill=(30, 41, 59), outline=(100, 116, 139), width=2
+        )
+        for rx in [115, 165, 215]:
+            win_col = (250, 204, 21) if is_night else (71, 85, 105)
+            draw.rectangle([rx, 112, rx + 30, 142], fill=win_col)
+
+        if is_night:
+            # Fantasminha chegando na recepção
+            gx = 35 + ((f - 15) * 4)
+            draw.ellipse([gx, 135, gx + 26, 165], fill=(165, 243, 252), outline=(255, 255, 255))
+        else:
+            # Martelo de construção e Sombroedas
+            draw.text((130, 152), "+MOBILIA +CHA", fill=(52, 211, 153))
+
+        frames.append(im)
+    save_gif(frames, "ciclo_dia_noite.gif")
+
+
+# 20. Grid de Construção & Decoração de Quartos (Cross-Section)
+def generate_gh_2_grid_construcao():
+    frames = []
+    total_frames = 30
+    for f in range(total_frames):
+        im = Image.new("RGB", (WIDTH, HEIGHT), (11, 15, 23))
+        draw = ImageDraw.Draw(im)
+        draw_background(draw, "GRID DE CONSTRUCAO & DECORACAO (2D)")
+
+        # Corte transversal do Hotel (2 andares x 2 quartos)
+        for floor_idx in range(2):
+            for room_idx in range(2):
+                rx = 45 + room_idx * 135
+                ry = 48 + floor_idx * 64
+                is_target = floor_idx == 0 and room_idx == 1
+                draw.rectangle(
+                    [rx, ry, rx + 125, ry + 58],
+                    fill=(24, 32, 50),
+                    outline=(52, 211, 153) if (is_target and f >= 12) else (71, 85, 105),
+                    width=2,
+                )
+                # Grid interno do quarto
+                for gx in range(rx + 25, rx + 125, 25):
+                    draw.line([gx, ry, gx, ry + 58], fill=(35, 46, 70), width=1)
+
+        # Posicionando móveis no quarto (Cama de Teias + Lareira)
+        if f >= 8:
+            draw.rounded_rectangle(
+                [190, 78, 230, 102], radius=3, fill=(139, 92, 246), outline=(255, 255, 255)
+            )
+            draw.text((194, 84), "CAMA", fill=(255, 255, 255))
+        if f >= 18:
+            draw.rounded_rectangle(
+                [252, 68, 290, 102], radius=3, fill=(234, 88, 12), outline=(250, 204, 21)
+            )
+            draw.text((255, 82), "FOGO", fill=(255, 255, 255))
+            draw.text((185, 36), "CONFORTO +25!", fill=(52, 211, 153))
+
+        frames.append(im)
+    save_gif(frames, "grid_construcao_quartos.gif")
+
+
+# 21. Alocação de Hóspedes & Puzzle de Vizinhança (Drag & Drop)
+def generate_gh_3_alocacao_vizinhanca():
+    frames = []
+    total_frames = 30
+    for f in range(total_frames):
+        im = Image.new("RGB", (WIDTH, HEIGHT), (11, 15, 23))
+        draw = ImageDraw.Draw(im)
+        draw_background(draw, "ALOCACAO & PUZZLE DE VIZINHANCA")
+
+        # Quarto 101 (Com Fantasma Barulhento)
+        draw.rounded_rectangle(
+            [30, 62, 165, 165], radius=6, fill=(45, 18, 35), outline=(244, 63, 94), width=2
+        )
+        draw.text((42, 70), "Q.101: BARULHENTO", fill=(251, 113, 133))
+        draw.ellipse([75, 105, 115, 145], fill=(244, 63, 94))
+
+        # Quarto 102 (Silencioso - Ideal para Sr. Bones)
+        good_drop = f >= 15
+        draw.rounded_rectangle(
+            [195, 62, 330, 165],
+            radius=6,
+            fill=(16, 48, 42) if good_drop else (24, 32, 50),
+            outline=(52, 211, 153) if good_drop else (100, 116, 139),
+            width=2,
+        )
+        draw.text((208, 70), "Q.102: SILENCIOSO", fill=(110, 231, 183))
+
+        # Arrastando o Sr. Bones
+        prog = min(1.0, f / 18.0)
+        bx = int(60 * (1 - prog) + 245 * prog)
+        by = int(42 * (1 - prog) + 108 * prog)
+        draw.ellipse([bx, by, bx + 36, by + 36], fill=(226, 232, 240), outline=(250, 204, 21), width=2)
+        draw.text((bx + 4, by + 12), "BONES", fill=(15, 23, 42))
+
+        if good_drop:
+            draw.text((205, 148), "MATCH PERFEITO! 5*", fill=(250, 204, 21))
+
+        frames.append(im)
+    save_gif(frames, "alocacao_vizinhanca.gif")
+
+
+# 22. Sistema de Traits, Fobias & Satisfação do Hóspede
+def generate_gh_4_traits_satisfacao():
+    frames = []
+    total_frames = 28
+    for f in range(total_frames):
+        im = Image.new("RGB", (WIDTH, HEIGHT), (11, 15, 23))
+        draw = ImageDraw.Draw(im)
+        draw_background(draw, "TRAITS, FOBIAS & SATISFACAO", floor=False)
+
+        # Card do Hóspede: Conde Vlad / Sr. Bones / Ignis
+        draw.rounded_rectangle(
+            [28, 48, 332, 192], radius=10, fill=(19, 24, 38), outline=(139, 92, 246), width=2
+        )
+        draw.ellipse([46, 72, 106, 132], fill=(249, 115, 22), outline=(254, 240, 138), width=2)
+        draw.text((54, 142), "IGNIS (FOGO)", fill=(253, 186, 116))
+
+        # Badges de Traits e Fobias
+        draw.rounded_rectangle(
+            [125, 60, 225, 84], radius=5, fill=(6, 78, 59), outline=(52, 211, 153)
+        )
+        draw.text((132, 67), "+AMA: LAREIRA", fill=(167, 243, 208))
+
+        draw.rounded_rectangle(
+            [232, 60, 320, 84], radius=5, fill=(127, 29, 29), outline=(248, 113, 113)
+        )
+        draw.text((238, 67), "-ODEIA: UMIDADE", fill=(254, 202, 202))
+
+        # Barras de humor / satisfação subindo
+        sat = min(100, 35 + f * 3)
+        draw.text((125, 102), f"HUMOR / PACIENCIA: {sat}%", fill=(255, 255, 255))
+        draw.rectangle([125, 120, 315, 138], fill=(30, 41, 59), outline=(71, 85, 105))
+        draw.rectangle(
+            [125, 120, 125 + int(190 * (sat / 100.0)), 138],
+            fill=(16, 185, 129) if sat > 60 else (245, 158, 11),
+        )
+        draw.text((125, 154), "STATUS: CONFORTAVEL (QUARTO PEDRA)", fill=(56, 189, 248))
+
+        frames.append(im)
+    save_gif(frames, "traits_satisfacao.gif")
+
+
+# 23. Room Service & Balões de Pedido Diegéticos
+def generate_gh_5_room_service():
+    frames = []
+    total_frames = 28
+    for f in range(total_frames):
+        im = Image.new("RGB", (WIDTH, HEIGHT), (11, 15, 23))
+        draw = ImageDraw.Draw(im)
+        draw_background(draw, "ROOM SERVICE & BALOES DIEGETICOS")
+
+        served = f >= 16
+
+        # Hóspede Dona Myrtle no quarto
+        draw.rounded_rectangle(
+            [135, 115, 225, 180], radius=8, fill=(30, 58, 138), outline=(125, 211, 252), width=2
+        )
+        draw.ellipse([160, 128, 200, 168], fill=(56, 189, 248))
+
+        # Balão de pensamento diegético acima do quarto
+        bob = int(math.sin(f * 0.5) * 3)
+        draw.rounded_rectangle(
+            [105, 45 + bob, 255, 92 + bob],
+            radius=10,
+            fill=(255, 255, 255),
+            outline=(16, 185, 129) if served else (245, 158, 11),
+            width=3,
+        )
+        if not served:
+            draw.text((118, 56 + bob), "PEDIDO: CHA DE ALEGRIA!", fill=(15, 23, 42))
+            draw.text((118, 72 + bob), "TEMPO RESTANTE: 8s", fill=(225, 29, 72))
+        else:
+            draw.text((122, 62 + bob), "PEDIDO ATENDIDO! +$$$", fill=(5, 150, 105))
+
+        frames.append(im)
+    save_gif(frames, "room_service_baloes.gif")
+
+
+# 24. Movimentação Fantasma & Pathfinding Intangível
+def generate_gh_6_pathfinding_fantasma():
+    frames = []
+    total_frames = 30
+    for f in range(total_frames):
+        im = Image.new("RGB", (WIDTH, HEIGHT), (11, 15, 23))
+        draw = ImageDraw.Draw(im)
+        draw_background(draw, "PATHFINDING FANTASMA (ATRAVESSA PAREDES)")
+
+        # Paredes divisórias dos quartos
+        for wx in [120, 240]:
+            draw.rectangle([wx, 42, wx + 10, 182], fill=(71, 85, 105), outline=(148, 163, 184))
+
+        # Fantasma flutuando em onda senoidal e atravessando as paredes!
+        gx = 30 + int((f / 29.0) * 280)
+        gy = 105 + int(math.sin(f * 0.45) * 18)
+        draw.ellipse(
+            [gx, gy, gx + 34, gy + 36],
+            fill=(165, 243, 252),
+            outline=(255, 255, 255),
+            width=2,
+        )
+        draw.text((gx - 8, gy - 14), "INTANGIVEL", fill=(103, 232, 249))
+
+        frames.append(im)
+    save_gif(frames, "pathfinding_fantasma.gif")
+
+
+# 25. Economia Dupla: Sombroedas & Medo (Check-out & Intrusos)
+def generate_gh_7_economia_sombroedas():
+    frames = []
+    total_frames = 28
+    for f in range(total_frames):
+        im = Image.new("RGB", (WIDTH, HEIGHT), (11, 15, 23))
+        draw = ImageDraw.Draw(im)
+        draw_background(draw, "ECONOMIA DUPLA: SOMBROEDAS & MEDO", floor=False)
+
+        # Painel Esquerdo: Sombroedas (Soft Currency)
+        draw.rounded_rectangle(
+            [22, 48, 172, 192], radius=10, fill=(24, 24, 42), outline=(250, 204, 21), width=2
+        )
+        draw.ellipse([75, 68, 118, 111], fill=(250, 204, 21), outline=(254, 240, 138), width=2)
+        draw.text((40, 125), "SOMBROEDAS (SOFT)", fill=(254, 240, 138))
+        draw.text((46, 148), f"SALDO: +{120 + f * 5}", fill=(255, 255, 255))
+        draw.text((34, 168), "Compra Moveis & Chas", fill=(148, 163, 184))
+
+        # Painel Direito: Medo (Hard Currency / XP)
+        draw.rounded_rectangle(
+            [188, 48, 338, 192], radius=10, fill=(38, 16, 48), outline=(192, 132, 252), width=2
+        )
+        draw.ellipse([242, 68, 285, 111], fill=(168, 85, 247), outline=(233, 213, 255), width=2)
+        draw.text((210, 125), "MEDO (HARD / XP)", fill=(233, 213, 255))
+        draw.text((218, 148), f"XP MEDO: +{15 + (f // 3)}", fill=(255, 255, 255))
+        draw.text((200, 168), "Libera Sotao & Grimorio", fill=(148, 163, 184))
+
+        frames.append(im)
+    save_gif(frames, "economia_sombroedas.gif")
+
+
 if __name__ == "__main__":
-    print("Gerando os 5 GIFs originais + 18 GIFs das mecânicas do Spellchemy...")
+    print("Gerando todos os GIFs do Catálogo Global (Originais + Spellchemy + Ghost Hotel)...")
     generate_jump_gif()
     generate_fsm_gif()
     generate_dash_gif()
@@ -1151,5 +1424,13 @@ if __name__ == "__main__":
     generate_16_mapa_incursao()
     generate_17_construcao_imperio()
     generate_18_inventario_reagentes()
-    print("Sucesso! Todos os 23 GIFs foram gerados em:", OUTPUT_DIR)
+
+    generate_gh_1_ciclo_dia_noite()
+    generate_gh_2_grid_construcao()
+    generate_gh_3_alocacao_vizinhanca()
+    generate_gh_4_traits_satisfacao()
+    generate_gh_5_room_service()
+    generate_gh_6_pathfinding_fantasma()
+    generate_gh_7_economia_sombroedas()
+    print("Sucesso! Todos os 30 GIFs foram gerados em:", OUTPUT_DIR)
     print("E copiados para o Obsidian em:", OBSIDIAN_GIFS_DIR)
